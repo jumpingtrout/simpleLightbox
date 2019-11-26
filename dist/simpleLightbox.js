@@ -1,3 +1,4 @@
+//simpleLightbox.js - http://dbrekalo.github.io/simpleLightbox/
 (function(root, factory) {
 
     if (typeof define === 'function' && define.amd) {
@@ -140,7 +141,13 @@
             this.eventRegistry = {lightbox: [], thumbnails: []};
             this.items = [];
             this.captions = [];
-
+			this.swipe = {
+				start_x : 0,
+				start_y : 0,
+				end_x : 0,
+				end_y : 0
+			};
+			
             if (elements) {
 
                 elements.forEach(function(element, index) {
@@ -200,13 +207,13 @@
         },
 
         next: function() {
-
+			this.toggle_close("none");
             return this.showPosition(this.currentPosition + 1);
 
         },
 
         prev: function() {
-
+			this.toggle_close("none");
             return this.showPosition(this.currentPosition - 1);
 
         },
@@ -279,6 +286,8 @@
                 callback.call(self, parseHtml(
                     '<div class="slbIframeCont"><iframe class="slbIframe" frameborder="0" allowfullscreen src="' + url + '"></iframe></div>')
                 );
+				
+				this.toggle_close("block");
 
             } else {
 
@@ -301,6 +310,7 @@
                     callback.call(self, $imageCont);
 
                     self.loadImage(self.items[self.normalizePosition(self.currentPosition + 1)]);
+					self.toggle_close("block");
 
                 });
 
@@ -367,8 +377,7 @@
                 addClass(document.documentElement, this.options.htmlClass);
                 this.setupLightboxEvents();
                 this.modalInDom = true;
-
-            }
+}
 
             return this;
 
@@ -412,7 +421,10 @@
             }
 
         },
-
+		toggle_close:function(_display){
+			let closebtn = this.$el.getElementsByClassName("slbCloseBtn")[0];
+			closebtn.style.display = _display;
+		},
         setupLightboxEvents: function() {
 
             var self = this;
@@ -430,7 +442,7 @@
                     self.close();
 
                 } else if (matches($target, '.slbArrow')) {
-
+					
                     matches($target, '.next') ? self.next() : self.prev();
 
                 } else if (self.options.nextOnImageClick && self.items.length > 1 && matches($target, '.slbImage')) {
@@ -452,6 +464,22 @@
 
                 self.setImageDimensions();
 
+            }).addEvent(window, 'touchstart', function(e) {
+				self.swipe.start_x = e.changedTouches[0].screenX;
+				self.swipe.start_y = e.changedTouches[0].screenY;
+
+            }).addEvent(window, 'touchend', function(e) {
+				if(self.items.length > 1){
+					self.swipe.end_x = e.changedTouches[0].screenX;
+					self.swipe.end_y = e.changedTouches[0].screenY;
+					
+					if (self.swipe.end_x < self.swipe.start_x || self.swipe.end_y > self.swipe.start_y) {
+						self.prev();
+					}
+					else if (self.swipe.end_x > self.swipe.start_x) {
+						self.next();
+					}
+				}
             });
 
             return this;
