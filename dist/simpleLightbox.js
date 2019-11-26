@@ -140,6 +140,12 @@
             this.eventRegistry = {lightbox: [], thumbnails: []};
             this.items = [];
             this.captions = [];
+            this.swipe = {
+				start_x : 0,
+				start_y : 0,
+				end_x : 0,
+				end_y : 0
+			};
 
             if (elements) {
 
@@ -452,6 +458,22 @@
 
                 self.setImageDimensions();
 
+            }).addEvent(window, 'touchstart', function(e) {
+				self.swipe.start_x = e.changedTouches[0].screenX;
+				self.swipe.start_y = e.changedTouches[0].screenY;
+
+            }).addEvent(window, 'touchend', function(e) {
+				if(self.items.length > 1){
+					self.swipe.end_x = e.changedTouches[0].screenX;
+					self.swipe.end_y = e.changedTouches[0].screenY;
+					
+					if (self.swipe.end_x < self.swipe.start_x || self.swipe.end_y > self.swipe.start_y) {
+						self.prev();
+					}
+					else if (self.swipe.end_x > self.swipe.start_x) {
+						self.next();
+					}
+				}
             });
 
             return this;
